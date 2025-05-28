@@ -201,7 +201,7 @@ def world_dynamics(t, replay_start_size, num_actions, s, env, policy_net):
 #   optimizer: centered RMSProp
 #
 ################################################################################################################
-def train(sample, policy_net, target_net, optimizer):
+def train(sample, policy_net, target_net, optimizer, double_dqn=False):
     # Batch is a list of namedtuple's, the following operation returns samples grouped by keys
     batch_samples = transition(*zip(*sample))
 
@@ -231,7 +231,11 @@ def train(sample, policy_net, target_net, optimizer):
 
     Q_s_prime_a_prime = torch.zeros(len(sample), 1, device=device)
     if len(none_terminal_next_states) != 0:
-        Q_s_prime_a_prime[none_terminal_next_state_index] = target_net(none_terminal_next_states).detach().max(1)[0].unsqueeze(1)
+        if double_dqn:
+            # Double DQN: use the policy network to select the action with max Q-value in the target network
+            Q_s_prime_a_prime[none_terminal_next_state_index] = target_net(none_terminal_next_states).detach().gather(1, policy_net(none_terminal_next_states).max(1)[1].unsqueeze(1))
+        else:
+            Q_s_prime_a_prime[none_terminal_next_state_index] = target_net(none_terminal_next_states).detach().max(1)[0].unsqueeze(1)
 
     # Compute the target
     target = rewards + GAMMA * Q_s_prime_a_prime
