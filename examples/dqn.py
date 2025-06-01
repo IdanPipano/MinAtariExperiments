@@ -266,7 +266,7 @@ def train(sample, policy_net, target_net, optimizer, double_dqn=False):
 #   step_size: step-size for RMSProp optimizer
 #
 #################################################################################################################
-def dqn(env, replay_off, target_off, output_file_name, store_intermediate_result=False, load_path=None, step_size=STEP_SIZE):
+def dqn(env, replay_off, target_off, output_file_name, store_intermediate_result=False, load_path=None, step_size=STEP_SIZE, double_dqn=False):
 
     # Get channels and number of actions specific to each game
     in_channels = env.state_shape()[2]
@@ -354,10 +354,10 @@ def dqn(env, replay_off, target_off, output_file_name, store_intermediate_result
             # Train every n number of frames defined by TRAINING_FREQ
             if t % TRAINING_FREQ == 0 and sample is not None:
                 if target_off:
-                    train(sample, policy_net, policy_net, optimizer)
+                    train(sample, policy_net, policy_net, optimizer, double_dqn=double_dqn)
                 else:
                     policy_net_update_counter += 1
-                    train(sample, policy_net, target_net, optimizer)
+                    train(sample, policy_net, target_net, optimizer, double_dqn=double_dqn)
 
             # Update the target network only after some number of policy network updates
             if not target_off and policy_net_update_counter > 0 and policy_net_update_counter % TARGET_NETWORK_UPDATE_FREQ == 0:
@@ -419,6 +419,7 @@ def main():
     parser.add_argument("--save", "-s", action="store_true")
     parser.add_argument("--replayoff", "-r", action="store_true")
     parser.add_argument("--targetoff", "-t", action="store_true")
+    parser.add_argument("--doubledqn", action="store_true")
     args = parser.parse_args()
 
     if args.verbose:
@@ -438,7 +439,7 @@ def main():
     env = Environment(args.game)
 
     print('Cuda available?: ' + str(torch.cuda.is_available()))
-    dqn(env, args.replayoff, args.targetoff, file_name, args.save, load_file_path, args.alpha)
+    dqn(env, args.replayoff, args.targetoff, file_name, args.save, load_file_path, args.alpha, double_dqn=args.doubledqn)
 
 
 if __name__ == '__main__':
