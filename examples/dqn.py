@@ -233,7 +233,8 @@ def train(sample, policy_net, target_net, optimizer, double_dqn=False):
     if len(none_terminal_next_states) != 0:
         if double_dqn:
             # Double DQN: use the policy network to select the action with max Q-value in the target network
-            Q_s_prime_a_prime[none_terminal_next_state_index] = target_net(none_terminal_next_states).detach().gather(1, policy_net(none_terminal_next_states).max(1)[1].unsqueeze(1))
+            # Q_s_prime_a_prime[none_terminal_next_state_index] = target_net(none_terminal_next_states).detach().gather(1, policy_net(none_terminal_next_states).max(1)[1].unsqueeze(1))
+            Q_s_prime_a_prime[none_terminal_next_state_index] = policy_net(none_terminal_next_states).detach().gather(1, target_net(none_terminal_next_states).max(1)[1].unsqueeze(1))
         else:
             Q_s_prime_a_prime[none_terminal_next_state_index] = target_net(none_terminal_next_states).detach().max(1)[0].unsqueeze(1)
 
